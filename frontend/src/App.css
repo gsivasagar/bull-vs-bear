@@ -1,0 +1,214 @@
+:root {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #0d1117;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background: radial-gradient(circle at top right, #1f2937, #0d1117);
+}
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  width: 100%;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.header h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+  background: linear-gradient(to right, #64b5f6, #42a5f5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: #8b949e;
+  font-size: 1.2rem;
+}
+
+.search-container {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 4rem;
+  flex-wrap: wrap;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 24px;
+  border-radius: 8px;
+  color: white;
+  font-size: 1.1rem;
+  width: 250px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.api-input {
+  width: 200px;
+  border-color: rgba(66, 165, 245, 0.3);
+}
+
+input:focus {
+  border-color: #42a5f5;
+  box-shadow: 0 0 0 2px rgba(66, 165, 245, 0.2);
+}
+
+button {
+  background: #2196f3;
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+button:hover {
+  background: #1976d2;
+  transform: translateY(-2px);
+}
+
+button:disabled {
+  background: #424242;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.verdict-section {
+  grid-column: 1 / -1;
+  margin-top: 2rem;
+}
+
+.market-data {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-around;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.data-item {
+  text-align: center;
+}
+
+.data-label {
+  color: #8b949e;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.data-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #e0e0e0;
+}
+
+.error-message {
+  color: #ef5350;
+  text-align: center;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(239, 83, 80, 0.1);
+  border-radius: 8px;
+}
+
+.recommendation-badge {
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-align: center;
+  padding: 1rem;
+  border-radius: 12px;
+  grid-column: 1 / -1;
+  /* Make it span full width in grid */
+  margin-bottom: 2rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.recommendation-badge.buy {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  border: 1px solid #4ade80;
+}
+
+.recommendation-badge.sell {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid #f87171;
+}
+
+.recommendation-badge.hold {
+  background: rgba(234, 179, 8, 0.2);
+  color: #facc15;
+  border: 1px solid #facc15;
+}
+
+.suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.suggestion-item {
+  padding: 8px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  text-align: left;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.input-group {
+  position: relative;
+  /* Ensure dropdown is positioned relative to this */
+}

@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+langchain
+langgraph
+langchain-google-genai
+langchain-ollama
+google-generativeai
+yfinance
+duckduckgo-search
+pydantic
+requests
