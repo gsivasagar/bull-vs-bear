@@ -3,6 +3,8 @@ import axios from 'axios'
 import './App.css'
 import ArgumentCard from './components/ArgumentCard'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 function App() {
   const [ticker, setTicker] = useState('')
   const [apiKey, setApiKey] = useState('')
@@ -24,8 +26,8 @@ function App() {
     setData(null)
 
     try {
-      // Connects to our FastAPI backend
-      const response = await axios.post('http://localhost:8000/api/debate', {
+      // Connects to our FastAPI backend OR production Vercel URL
+      const response = await axios.post(`${API_BASE_URL}/api/debate`, {
         ticker: ticker,
         api_key: apiKey
       })
@@ -66,7 +68,7 @@ function App() {
 
               if (val.length > 0) {
                 try {
-                  const res = await axios.get(`http://localhost:8000/api/search?q=${val}`)
+                  const res = await axios.get(`${API_BASE_URL}/api/search?q=${val}`)
                   setSuggestions(res.data)
                 } catch (err) {
                   console.error("Search error", err)

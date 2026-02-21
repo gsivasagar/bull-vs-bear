@@ -9,3 +9,4 @@ yfinance
 duckduckgo-search
 pydantic
 requests
+streamlit

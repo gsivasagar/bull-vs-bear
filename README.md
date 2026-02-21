@@ -60,6 +60,18 @@ npm run dev
 ```
 *UI runs on http://localhost:5173*
 
+### 🐳 Docker Setup (Recommended)
+
+Run the entire application with a single command:
+
+```bash
+docker compose up --build
+```
+
+-   **Frontend**: http://localhost:5173
+-   **Backend**: http://localhost:8000
+-   **Streamlit**: http://localhost:8501
+
 ## 💡 Usage
 
 1.  Open **http://localhost:5173** in your browser.
