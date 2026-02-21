@@ -23,7 +23,7 @@ def list_available_models(api_key):
     except Exception as e:
         print(f"Error listing models: {e}")
 
-def call_llm_with_retry(llm, messages, max_retries=3, initial_delay=60):
+def call_llm_with_retry(llm, messages, max_retries=3, initial_delay=15):
     """
     Calls the LLM with a robust retry mechanism for 429 errors.
     """
