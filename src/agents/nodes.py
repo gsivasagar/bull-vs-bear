@@ -96,6 +96,9 @@ def bull_agent_node(state: AgentState) -> AgentState:
         
         response = call_llm_with_retry(llm, messages)
         return {"bull_argument": response.content}
+    except ConnectionError as ce:
+        print(f"Ollama Connection Error in Bull Agent: {ce}")
+        return {"bull_argument": "❌ Connection to local Ollama failed. If you are using the live site, you MUST provide a Gemini API Key. The live server cannot reach your local computer's Ollama instance."}
     except Exception as e:
         print(f"ERROR in Bull Agent: {e}")
         list_available_models(api_key)
@@ -126,6 +129,9 @@ def bear_agent_node(state: AgentState) -> AgentState:
         
         response = call_llm_with_retry(llm, messages)
         return {"bear_argument": response.content}
+    except ConnectionError as ce:
+        print(f"Ollama Connection Error in Bear Agent: {ce}")
+        return {"bear_argument": "❌ Connection to local Ollama failed. If you are using the live site, you MUST provide a Gemini API Key. The live server cannot reach your local computer's Ollama instance."}    
     except Exception as e:
         print(f"ERROR in Bear Agent: {e}")
         list_available_models(api_key)
@@ -179,6 +185,9 @@ def judge_agent_node(state: AgentState) -> AgentState:
             recommendation = "HOLD" # Default safety
             
         return {"verdict": content, "recommendation": recommendation}
+    except ConnectionError as ce:
+        print(f"Ollama Connection Error in Judge Agent: {ce}")
+        return {"verdict": "❌ Connection to local Ollama failed. If you are using the live site, you MUST provide a Gemini API Key.", "recommendation": "ERROR"}    
     except Exception as e:
         print(f"ERROR in Judge Agent: {e}")
         list_available_models(api_key)

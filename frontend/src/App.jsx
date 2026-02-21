@@ -15,11 +15,13 @@ function App() {
 
   const handleSearch = async () => {
     if (!ticker) return
-    // API key is now optional for local Ollama usage
-    // if (!apiKey) {
-    //   setError("Please enter your Gemini API Key")
-    //   return
-    // }
+    const isLocal = API_BASE_URL.includes('localhost');
+
+    // API key is optional for local Ollama usage, required for live site
+    if (!isLocal && !apiKey) {
+      setError("Please enter your Gemini API Key. Ollama is only supported when running the app locally.")
+      return
+    }
 
     setLoading(true)
     setError(null)
@@ -51,7 +53,7 @@ function App() {
         <div className="input-group">
           <input
             type="password"
-            placeholder="Gemini API Key (Optional for Local)"
+            placeholder={API_BASE_URL.includes('localhost') ? "Gemini API Key (Optional for Local Ollama)" : "Gemini API Key (Required for Live Site)"}
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             className="api-input"
