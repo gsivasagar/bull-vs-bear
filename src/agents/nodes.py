@@ -1,51 +1,22 @@
-from typing import TypedDict, Annotated, List, Dict, Any
+import json
+import logging
+from typing import Any, Dict, List, TypedDict
+
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_ollama import ChatOllama
-from langchain_core.prompts import ChatPromptTemplate
 
-from src.tools.market_data import get_stock_price, get_financials
-from src.tools.news import get_market_news
-from src.agents.prompts import BULL_AGENT_PROMPT, BEAR_AGENT_PROMPT, JUDGE_AGENT_PROMPT
-import operator
-import google.generativeai as genai
-import time
+from src.agents.prompts import BEAR_AGENT_PROMPT, BULL_AGENT_PROMPT, JUDGE_AGENT_PROMPT
+from src.errors import DataSourceError, DataUnavailableError
+from src.llm import get_llm, invoke_with_retry
+from src.tools.market_data import get_financials, get_stock_price
+from src.tools.news import clean, get_market_news
+from src.verdict import parse_recommendation
 
-# Helper to list models
-def list_available_models(api_key):
-    try:
-        genai.configure(api_key=api_key)
-        print("--- Available Models ---")
-        for m in genai.list_models():
-            if 'generateContent' in m.supported_generation_methods:
-                print(m.name)
-        print("------------------------")
-    except Exception as e:
-        print(f"Error listing models: {e}")
+log = logging.getLogger(__name__)
 
-def call_llm_with_retry(llm, messages, max_retries=3, initial_delay=15):
-    """
-    Calls the LLM with a robust retry mechanism for 429 errors.
-    """
-    delay = initial_delay
-    for attempt in range(max_retries):
-        try:
-            return llm.invoke(messages)
-        except Exception as e:
-            error_str = str(e)
-            if "429" in error_str:
-                print(f"RATE LIMIT HIT (Attempt {attempt+1}/{max_retries}). Sleeping for {delay} seconds...")
-                time.sleep(delay)
-                delay *= 1.5 # Exponential backoff
-            else:
-                raise e
-    raise Exception("Max retries exceeded for Rate Limit")
 
-# Define the State of the Graph
-# Define the State of the Graph
-class AgentState(TypedDict):
+class AgentState(TypedDict, total=False):
     ticker: str
-    api_key: str # Added field for API key
+    api_key: str | None          # used only to build the model client; never returned or logged
     price_data: Dict[str, Any]
     financials: Dict[str, Any]
     news_data: List[Dict[str, str]]
@@ -54,141 +25,53 @@ class AgentState(TypedDict):
     verdict: str
     recommendation: str
 
-# Define the Nodes
+
+def format_data(state: AgentState) -> str:
+    """The evidence block shared by all agents. It is wrapped in <data> tags and told to be treated as untrusted."""
+    price = dict(state.get("price_data") or {})
+    price["summary"] = clean(price.get("summary"), 600)
+    body = json.dumps({
+        "ticker": state["ticker"],
+        "price_data": price,
+        "financials": state.get("financials") or {},
+        "news": state.get("news_data") or [],
+    }, indent=2, default=str)
+    return "<data>\n" + body.replace("</data", "< /data") + "\n</data>"
+
 
 def fetch_data_node(state: AgentState) -> AgentState:
     ticker = state["ticker"]
-    print(f"--- Fecthing Data for {ticker} ---")
-    
-    price_data = get_stock_price(ticker)
+    price = get_stock_price(ticker)
+    if "error" in price:
+        if price.get("kind") == "not_found":
+            raise DataUnavailableError(f"No market data was found for '{ticker}'. Check the ticker symbol.")
+        raise DataSourceError()
     financials = get_financials(ticker)
-    news_data = get_market_news(f"{ticker} stock news")
-    
-    return {
-        "price_data": price_data,
-        "financials": financials,
-        "news_data": news_data
-    }
+    if "error" in financials:
+        financials = {}                       # ratios are nice to have; the debate can go on without them
+    return {"price_data": price, "financials": financials, "news_data": get_market_news(f"{ticker} stock news")}
+
+
+def _ask(state: AgentState, system_prompt: str, request: str, temperature: float) -> str:
+    api_key = state.get("api_key")
+    llm = get_llm(api_key, temperature)
+    messages = [SystemMessage(content=system_prompt), HumanMessage(content=request)]
+    return invoke_with_retry(llm, messages, api_key=api_key)
+
 
 def bull_agent_node(state: AgentState) -> AgentState:
-    time.sleep(4) # Rate limit backoff
-    print("--- Bull Agent Thinking ---")
-    api_key = state.get("api_key")
-    
-    try:
-        # Check if we should use Ollama (If no API key provided)
-        if not api_key:
-             llm = ChatOllama(model="gemma3:latest", temperature=0.7)
-        else:
-             llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.7, google_api_key=api_key)
-        
-        data_context = f"""
-        Ticker: {state['ticker']}
-        Price Data: {state['price_data']}
-        Financials: {state['financials']}
-        News: {state['news_data']}
-        """
-        
-        messages = [
-            SystemMessage(content=BULL_AGENT_PROMPT),
-            HumanMessage(content=f"Here is the data:\n{data_context}\n\nPresent your Bull Case.")
-        ]
-        
-        response = call_llm_with_retry(llm, messages)
-        return {"bull_argument": response.content}
-    except ConnectionError as ce:
-        print(f"Ollama Connection Error in Bull Agent: {ce}")
-        return {"bull_argument": "❌ Connection to local Ollama failed. If you are using the live site, you MUST provide a Gemini API Key. The live server cannot reach your local computer's Ollama instance."}
-    except Exception as e:
-        print(f"ERROR in Bull Agent: {e}")
-        list_available_models(api_key)
-        return {"bull_argument": f"Error generating argument: {str(e)}"}
+    text = _ask(state, BULL_AGENT_PROMPT, f"Here is the data:\n{format_data(state)}\n\nPresent your Bull Case.", 0.7)
+    return {"bull_argument": text}
+
 
 def bear_agent_node(state: AgentState) -> AgentState:
-    time.sleep(4) # Rate limit backoff
-    print("--- Bear Agent Thinking ---")
-    api_key = state.get("api_key")
-    
-    try:
-        if not api_key:
-             llm = ChatOllama(model="gemma3:latest", temperature=0.7)
-        else:
-             llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.7, google_api_key=api_key)
-        
-        data_context = f"""
-        Ticker: {state['ticker']}
-        Price Data: {state['price_data']}
-        Financials: {state['financials']}
-        News: {state['news_data']}
-        """
-        
-        messages = [
-            SystemMessage(content=BEAR_AGENT_PROMPT),
-            HumanMessage(content=f"Here is the data:\n{data_context}\n\nPresent your Bear Case.")
-        ]
-        
-        response = call_llm_with_retry(llm, messages)
-        return {"bear_argument": response.content}
-    except ConnectionError as ce:
-        print(f"Ollama Connection Error in Bear Agent: {ce}")
-        return {"bear_argument": "❌ Connection to local Ollama failed. If you are using the live site, you MUST provide a Gemini API Key. The live server cannot reach your local computer's Ollama instance."}    
-    except Exception as e:
-        print(f"ERROR in Bear Agent: {e}")
-        list_available_models(api_key)
-        return {"bear_argument": f"Error generating argument: {str(e)}"}
+    text = _ask(state, BEAR_AGENT_PROMPT, f"Here is the data:\n{format_data(state)}\n\nPresent your Bear Case.", 0.7)
+    return {"bear_argument": text}
+
 
 def judge_agent_node(state: AgentState) -> AgentState:
-    time.sleep(4) # Rate limit backoff
-    print("--- Judge Agent Deciding ---")
-    api_key = state.get("api_key")
-    
-    try:
-        if not api_key:
-             llm = ChatOllama(model="gemma3:latest", temperature=0.5)
-        else:
-             llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.5, google_api_key=api_key) # Lower temp for more stable output
-        
-        arguments_context = f"""
-        Ticker: {state['ticker']}
-        
-        --- BULL ARGUMENT ---
-        {state['bull_argument']}
-        
-        --- BEAR ARGUMENT ---
-        {state['bear_argument']}
-        
-        --- RAW DATA ---
-        Price Data: {state['price_data']}
-        Financials: {state['financials']}
-        News: {state['news_data']}
-        """
-        
-        messages = [
-            SystemMessage(content=JUDGE_AGENT_PROMPT),
-            HumanMessage(content=f"Review the arguments and data below and render your verdict:\n{arguments_context}")
-        ]
-        
-        response = call_llm_with_retry(llm, messages)
-        content = response.content
-        
-        # Parse recommendation (First line)
-        try:
-            lines = content.strip().split('\n')
-            recommendation = lines[0].strip().upper()
-            if recommendation not in ["BUY", "SELL", "HOLD"]:
-                # Fallback if model chatted a bit
-                for word in ["BUY", "SELL", "HOLD"]:
-                    if word in lines[0].upper():
-                        recommendation = word
-                        break
-        except:
-            recommendation = "HOLD" # Default safety
-            
-        return {"verdict": content, "recommendation": recommendation}
-    except ConnectionError as ce:
-        print(f"Ollama Connection Error in Judge Agent: {ce}")
-        return {"verdict": "❌ Connection to local Ollama failed. If you are using the live site, you MUST provide a Gemini API Key.", "recommendation": "ERROR"}    
-    except Exception as e:
-        print(f"ERROR in Judge Agent: {e}")
-        list_available_models(api_key)
-        return {"verdict": f"Error generating verdict: {str(e)}"}
+    context = (f"--- BULL ARGUMENT ---\n{state['bull_argument']}\n\n"
+               f"--- BEAR ARGUMENT ---\n{state['bear_argument']}\n\n--- RAW DATA ---\n{format_data(state)}")
+    request = f"Review the arguments and data below and render your verdict:\n{context}"
+    text = _ask(state, JUDGE_AGENT_PROMPT, request, 0.5)
+    return {"verdict": text, "recommendation": parse_recommendation(text)}

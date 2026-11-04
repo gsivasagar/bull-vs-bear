@@ -1,12 +1,10 @@
-fastapi
-uvicorn
-langchain
-langgraph
-langchain-google-genai
-langchain-ollama
-google-generativeai
-yfinance
-duckduckgo-search
-pydantic
-requests
-streamlit
+# Tested versions (pinned). To upgrade: change a version, run `pytest`, then commit.
+fastapi==0.162.0
+uvicorn==0.54.0
+langgraph==1.2.19
+langchain-core==1.7.4
+langchain-google-genai==4.4.2
+langchain-ollama==1.1.0
+yfinance==1.8.0
+duckduckgo-search==8.1.1
+pydantic==2.14.2

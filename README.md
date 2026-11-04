@@ -1,102 +1,94 @@
-# Bull vs Bear: AI Investment Debate 🐂🐻⚖️
+# Bull vs Bear: AI Investment Debate
 
-An AI-powered investment analysis tool that orchestrates a debate between a "Bull" agent (optimist) and a "Bear" agent (skeptic), presided over by a "Judge" who renders a final verdict and investment recommendation.
+An AI tool that stages a debate about a stock. A **Bull** agent argues for buying, a **Bear** agent argues against, and
+a **Judge** weighs both against the underlying data and issues a BUY / SELL / HOLD memo.
 
-![Demo Screenshot](frontend/public/vite.svg) <!-- Replace with actual screenshot if available -->
+> **Not financial advice.** The output is AI-generated text built from public data. It can be wrong, out of date or
+> biased by the news it reads. Use it for learning and entertainment only.
 
-## 🚀 Features
+## How it works
 
--   **Multi-Agent Debate**: Orchestrates three LLM agents (Bull, Bear, Judge) using **LangGraph**.
--   **Live Data**: Fetches real-time stock prices and financials via `yfinance`.
--   **Market News**: Scrapes latest news headlines using `duckduckgo-search`.
--   **Dual LLM Support**:
-    -   **Gemini 2.0 Flash**: Fast, high-quality inference (requires API Key).
-    -   **Ollama (Local)**: Runs locally with `gemma3:latest` (or other models) for privacy/free usage.
--   **Interactive UI**: Modern React frontend with glassmorphism design, real-time status updates, and ticker search suggestions.
--   **Robust Error Handling**: Handles API rate limits with automatic retries and exponential backoff.
-
-## 🛠️ Tech Stack
-
--   **Backend**: Python, FastAPI, LangGraph, LangChain
--   **Frontend**: React, Vite, Axios, Vanilla CSS
--   **AI Serving**: Google Gemini API, Ollama (Local)
-
-## 📦 Installation
-
-### Prerequisites
-
--   Python 3.10+
--   Node.js 18+
--   (Optional) [Ollama](https://ollama.com/) for local inference.
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/yourusername/bull-vs-bear.git
-cd bull-vs-bear
+```
+fetch data (price, ratios, news) ──┬──> Bull agent ──┐
+                                   └──> Bear agent ──┴──> Judge ──> BUY / SELL / HOLD memo
 ```
 
-### 2. Backend Setup
+- **LangGraph** runs the steps. Bull and Bear never read each other's argument, so they run **in parallel**; the Judge
+  waits for both.
+- **Data:** `yfinance` (price and ratios) and DuckDuckGo news search, cached for 5 minutes. News is untrusted web text:
+  it is cleaned, wrapped in `<data>` tags and the agents are told to ignore instructions inside it.
+- **Models:** Google Gemini (`gemini-2.0-flash`) when you enter an API key, otherwise a local Ollama model
+  (`gemma3:latest`). Rate-limit errors are retried with growing waits; other errors are reported, never fed to the Judge.
+- **Live progress:** the backend streams each step to the browser with Server-Sent Events.
+- **Safe rendering:** the browser shows model output as Markdown, never as raw HTML.
+
+## Run it
+
+Requirements: Python 3.12+, Node 20+, and optionally [Ollama](https://ollama.com) (`ollama pull gemma3`).
 
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+# backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements-dev.txt
+uvicorn src.api:app --port 8000
 
-# Start the server
-python src/api.py
+# frontend (another terminal)
+cd frontend && npm install && npm run dev      # http://localhost:5173
 ```
-*Server runs on http://localhost:8000*
 
-### 3. Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start the dev server
-npm run dev
-```
-*UI runs on http://localhost:5173*
-
-### 🐳 Docker Setup (Recommended)
-
-Run the entire application with a single command:
+Or with Docker (backend on 8000, frontend on 5173):
 
 ```bash
 docker compose up --build
 ```
+Inside Docker, Ollama on your computer is reached at `host.docker.internal:11434` (override with `OLLAMA_BASE_URL`).
 
--   **Frontend**: http://localhost:5173
--   **Backend**: http://localhost:8000
--   **Streamlit**: http://localhost:8501
+### Using a Gemini key
+Type your key in the page. It is sent to the backend in an `X-Api-Key` header (never in the URL or body), used for that
+request only, redacted from logs and errors, and never returned. Leave it empty to use local Ollama.
 
-## 💡 Usage
+## API
 
-1.  Open **http://localhost:5173** in your browser.
-2.  **Enter Stock Ticker**: e.g., `NVDA`, `AAPL`, `TSLA`. Use the search dropdown for suggestions.
-3.  **API Key (Optional)**:
-    -   Enter your **Gemini API Key** for best results.
-    -   **Leave blank** to use **Ollama** running locally on your machine.
-    -   *Note: Ensure you have `gemma3` model pulled: `ollama pull gemma3`*
-4.  Click **Start Debate**.
-5.  Watch the agents research, argue, and decide!
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/api/debate` | `{"ticker": "NVDA"}`, optional `X-Api-Key` header. Returns the whole debate as JSON. |
+| POST | `/api/debate/stream` | Same input; Server-Sent Events: `start`, one `stage` per finished step, then `done` or `error`. |
+| GET | `/api/search?q=nvi` | Ticker suggestions (a built-in list of about 80 large companies). |
+| GET | `/api/health` | Liveness. |
 
-## 🤖 Agents
+Errors use clear statuses: 404 unknown ticker, 401 key rejected, 429 rate limited (by us or the provider), 503 model or
+data source unreachable, 502 model error, 422 invalid ticker.
 
-| Agent | Role | Goal |
-| :--- | :--- | :--- |
-| **🐂 Bull** | Optimist | Finds growth drivers, competitive advantages, and positive catalysts. |
-| **🐻 Bear** | Skeptic | Highlights risks, valuation concerns, and competitive threats. |
-| **⚖️ Judge** | Arbiter | Weighs both sides to provide a "BUY", "SELL", or "HOLD" verdict. |
+## Configuration
 
-## ⚠️ Troubleshooting
+Environment variables (see `.env.example`): `CORS_ORIGINS`, `RATE_LIMIT_PER_MINUTE`, `GEMINI_MODEL`, `OLLAMA_MODEL`,
+`OLLAMA_BASE_URL`, `LLM_MAX_RETRIES`, `LLM_RETRY_BASE_DELAY`, `DATA_CACHE_TTL_SECONDS`. The frontend reads `VITE_API_URL`.
 
--   **429 Quota Exceeded**: The system has built-in 60s retry logic. If the debate pauses, check the backend terminal; it's likely sleeping to respect rate limits.
--   **404 Model Not Found**: The code defaults to `gemini-2.0-flash`. Ensure your API key supports this model.
--   **Ollama Errors**: Make sure Ollama is running (`ollama serve`) and you have pulled the model (`ollama pull gemma3`).
+## Tests
 
-## 📄 License
+```bash
+pytest -q                       # backend: 75 tests, no network or model needed
+cd frontend && npm test         # frontend: 11 tests
+ruff check .  &&  cd frontend && npm run lint
+```
+CI runs all of this on every push (`.github/workflows/ci.yml`).
+
+## Security notes
+
+- The key is header-only, redacted, and never echoed; the response is an explicit whitelist of fields.
+- CORS is limited to configured origins with no credentials; the debate endpoints are rate limited per client address
+  (in memory, so one counter per process; put a proxy or shared store in front for strict limits).
+- Tickers are validated; model output is rendered as text/Markdown only (no HTML, no images, safe links).
+- Containers run as non-root users; dependencies are pinned.
+
+## Known limitations
+
+- The Judge is another language model reading the same data. Nothing here measures whether verdicts are correct; they are
+  not predictions to act on.
+- News comes from scraping DuckDuckGo, which can fail or be blocked; the debate then runs on price and ratios only.
+- The ticker search is a short fixed list; the debate itself accepts any symbol Yahoo Finance knows.
+- Rate limiting is per process and uses the connecting address, so behind a proxy it needs configuring.
+
+## License
 
 MIT License.

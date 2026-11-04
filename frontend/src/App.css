@@ -212,3 +212,44 @@ button:disabled {
   position: relative;
   /* Ensure dropdown is positioned relative to this */
 }
+/* Progress while the debate runs */
+.progress-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto 1.5rem;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.progress-step {
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.95rem;
+}
+
+.progress-step.active {
+  color: #64b5f6;
+  background: rgba(100, 181, 246, 0.1);
+}
+
+.progress-step.done {
+  color: #81c784;
+}
+
+.recommendation-badge.unknown {
+  background: rgba(158, 158, 158, 0.15);
+  color: #bdbdbd;
+  border-color: rgba(158, 158, 158, 0.4);
+}
+
+.disclaimer {
+  margin: 3rem auto 0;
+  max-width: 640px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.45);
+}

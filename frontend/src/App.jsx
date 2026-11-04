@@ -1,46 +1,102 @@
-import { useState } from 'react'
-import axios from 'axios'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import ArgumentCard from './components/ArgumentCard'
+import { streamDebate } from './sse'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+const STAGE_LABELS = {
+  fetch_data: 'Fetching market data and news',
+  bull_agent: 'The Bull is building the case',
+  bear_agent: 'The Bear is building the case',
+  judge_agent: 'The Judge is weighing both sides',
+}
+
+const DEFAULT_DISCLAIMER =
+  'For education and entertainment only. AI-generated from public data; not financial advice.'
+
+const formatNumber = (value) =>
+  typeof value === 'number' ? value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—'
 
 function App() {
   const [ticker, setTicker] = useState('')
   const [apiKey, setApiKey] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [running, setRunning] = useState(false)
+  const [stages, setStages] = useState([])        // every step that will run
+  const [finished, setFinished] = useState([])    // steps that have finished
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
-  const [suggestions, setSuggestions] = useState([]) // New state for search suggestions
+  const [suggestions, setSuggestions] = useState([])
+  const abortRef = useRef(null)
+
+  // Stop any running debate when the page closes.
+  useEffect(() => () => abortRef.current?.abort(), [])
+
+  // Ticker suggestions: wait for a pause in typing and encode the text before putting it in the URL.
+  useEffect(() => {
+    const query = ticker.trim()
+    if (!query) return undefined
+    const controller = new AbortController()
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/search?q=${encodeURIComponent(query)}`, { signal: controller.signal })
+        if (res.ok) setSuggestions(await res.json())
+      } catch {
+        // suggestions are a convenience; ignore failures and aborts
+      }
+    }, 250)
+    return () => {
+      clearTimeout(timer)
+      controller.abort()
+    }
+  }, [ticker])
 
   const handleSearch = async () => {
-    if (!ticker) return
-    const isLocal = API_BASE_URL.includes('localhost');
+    const symbol = ticker.trim()
+    if (!symbol || running) return
+    const isLocal = API_BASE_URL.includes('localhost')
 
-    // API key is optional for local Ollama usage, required for live site
+    // The key is optional for a local Ollama setup and required for a hosted deployment.
     if (!isLocal && !apiKey) {
-      setError("Please enter your Gemini API Key. Ollama is only supported when running the app locally.")
+      setError('Please enter your Gemini API Key. Ollama is only supported when running the app locally.')
       return
     }
 
-    setLoading(true)
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    setRunning(true)
     setError(null)
     setData(null)
+    setStages([])
+    setFinished([])
+    setSuggestions([])
 
     try {
-      // Connects to our FastAPI backend OR production Vercel URL
-      const response = await axios.post(`${API_BASE_URL}/api/debate`, {
-        ticker: ticker,
-        api_key: apiKey
+      await streamDebate({
+        baseUrl: API_BASE_URL,
+        ticker: symbol,
+        apiKey,
+        signal: controller.signal,
+        onEvent: ({ event, data: payload }) => {
+          if (event === 'start') setStages(payload.stages)
+          else if (event === 'stage') {
+            setFinished((done) => [...done, payload.stage])
+            setData(payload.result)
+          } else if (event === 'done') setData(payload)
+          else if (event === 'error') setError(payload.detail)
+        },
       })
-      setData(response.data)
     } catch (err) {
-      console.error(err)
-      setError(err.response?.data?.detail || err.message || 'An error occurred while fetching the debate.')
+      if (err.name !== 'AbortError') setError(err.message || 'An error occurred while running the debate.')
     } finally {
-      setLoading(false)
+      setRunning(false)
     }
   }
+
+  const complete = data && data.verdict
+  const recommendation = data?.recommendation || 'UNKNOWN'
 
   return (
     <div className="container">
@@ -53,7 +109,8 @@ function App() {
         <div className="input-group">
           <input
             type="password"
-            placeholder={API_BASE_URL.includes('localhost') ? "Gemini API Key (Optional for Local Ollama)" : "Gemini API Key (Required for Live Site)"}
+            autoComplete="off"
+            placeholder={API_BASE_URL.includes('localhost') ? 'Gemini API Key (Optional for Local Ollama)' : 'Gemini API Key (Required for Live Site)'}
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             className="api-input"
@@ -64,23 +121,12 @@ function App() {
             type="text"
             placeholder="Enter Stock Ticker (e.g. NVDA)"
             value={ticker}
-            onChange={async (e) => {
-              const val = e.target.value
-              setTicker(val)
-
-              if (val.length > 0) {
-                try {
-                  const res = await axios.get(`${API_BASE_URL}/api/search?q=${val}`)
-                  setSuggestions(res.data)
-                } catch (err) {
-                  console.error("Search error", err)
-                }
-              } else {
-                setSuggestions([])
-              }
+            onChange={(e) => {
+              setTicker(e.target.value)
+              if (!e.target.value.trim()) setSuggestions([])
             }}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            onBlur={() => setTimeout(() => setSuggestions([]), 200)} // Delay to allow click
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            onBlur={() => setTimeout(() => setSuggestions([]), 200)} // delay so a click on a suggestion registers
           />
           {suggestions.length > 0 && (
             <div className="suggestions-dropdown">
@@ -99,58 +145,61 @@ function App() {
             </div>
           )}
         </div>
-        <button onClick={handleSearch} disabled={loading}>
-          {loading ? 'Analyzing...' : 'Start Debate'}
+        <button onClick={handleSearch} disabled={running}>
+          {running ? 'Analyzing...' : 'Start Debate'}
         </button>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
+      {stages.length > 0 && (
+        <ul className="progress-list" aria-live="polite">
+          {stages.map((stage) => {
+            const state = finished.includes(stage) ? 'done' : running ? 'active' : 'idle'
+            return (
+              <li key={stage} className={`progress-step ${state}`}>
+                {state === 'done' ? '✓' : state === 'active' ? '…' : '•'} {STAGE_LABELS[stage] ?? stage}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+
+      {error && <div className="error-message" role="alert">{error}</div>}
 
       {data && (
         <>
           <div className="market-data">
             <div className="data-item">
-              <div className="data-label">Current Price</div>
-              <div className="data-value">${data.price_data.current_price?.toFixed(2)}</div>
+              <div className="data-label">{data.price_data?.company_name || 'Current Price'}</div>
+              <div className="data-value">
+                {typeof data.price_data?.current_price === 'number' ? `$${data.price_data.current_price.toFixed(2)}` : '—'}
+              </div>
             </div>
             <div className="data-item">
               <div className="data-label">Market Cap</div>
-              <div className="data-value">{data.financials.market_cap}</div>
+              <div className="data-value">{formatNumber(data.financials?.market_cap)}</div>
             </div>
             <div className="data-item">
               <div className="data-label">P/E Ratio</div>
-              <div className="data-value">{data.financials.pe_ratio}</div>
+              <div className="data-value">{formatNumber(data.financials?.pe_ratio)}</div>
             </div>
           </div>
 
           <div className="dashboard">
-            <div className={`recommendation-badge ${data.recommendation?.toLowerCase()}`}>
-              {data.recommendation || "HOLD"}
-            </div>
-            <ArgumentCard
-              title="The Bull Case"
-              type="bull"
-              icon="🐂"
-              content={data.bull_argument}
-            />
-            <ArgumentCard
-              title="The Bear Case"
-              type="bear"
-              icon="🐻"
-              content={data.bear_argument}
-            />
-
+            {complete && (
+              <div className={`recommendation-badge ${recommendation.toLowerCase()}`}>
+                {recommendation === 'UNKNOWN' ? 'UNCLEAR' : recommendation}
+              </div>
+            )}
+            <ArgumentCard title="The Bull Case" type="bull" icon="🐂" content={data.bull_argument} />
+            <ArgumentCard title="The Bear Case" type="bear" icon="🐻" content={data.bear_argument} />
             <div className="verdict-section">
-              <ArgumentCard
-                title="The Verdict"
-                type="judge"
-                icon="⚖️"
-                content={data.verdict}
-              />
+              <ArgumentCard title="The Verdict" type="judge" icon="⚖️" content={data.verdict} />
             </div>
           </div>
         </>
       )}
+
+      <p className="disclaimer">{data?.disclaimer || DEFAULT_DISCLAIMER}</p>
     </div>
   )
 }

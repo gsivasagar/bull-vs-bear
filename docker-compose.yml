@@ -1,38 +1,27 @@
-version: '3.8'
-
 services:
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     ports:
       - "8000:8000"
     environment:
-      - PORT=8000
-      # Pass through the OpenAI API Key if set in host environment, or let user set it via .env file or UI
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-    volumes:
-      - ./src:/app/src
-    command: uvicorn src.api:app --host 0.0.0.0 --port 8000 --reload
-
-  streamlit:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8501:8501"
-    environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-    volumes:
-      - ./src:/app/src
-      - ./app.py:/app/app.py
-    command: streamlit run app.py
+      # Browser origins allowed to call the API
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173}
+      - RATE_LIMIT_PER_MINUTE=${RATE_LIMIT_PER_MINUTE:-10}
+      # Default: the Ollama running on your computer (used when no Gemini key is entered)
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-gemma3:latest}
+    extra_hosts:
+      # Lets Linux resolve host.docker.internal (harmless on Mac/Windows)
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
     ports:
-      - "5173:80"
+      - "5173:8080"
     depends_on:
       - backend
+    restart: unless-stopped
