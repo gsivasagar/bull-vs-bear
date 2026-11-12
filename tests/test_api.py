@@ -19,11 +19,16 @@ def test_happy_path_returns_the_expected_whitelisted_shape(client):
     r = post(client)
     assert r.status_code == 200
     body = r.json()
-    assert set(body) == {"ticker", "price_data", "financials", "news", "bull_argument", "bear_argument", "verdict",
-                         "recommendation", "disclaimer"}
+    assert set(body) == {"ticker", "price_data", "financials", "quant", "news", "bull_argument", "bear_argument", "verdict",
+                         "recommendation", "judge", "usage", "disclaimer"}
     assert body["ticker"] == "NVDA" and body["recommendation"] == "BUY"
     assert set(body["price_data"]) == {"company_name", "current_price", "currency", "sector"}
     assert "not financial advice" in body["disclaimer"]
+
+
+def test_the_browser_gets_the_full_quant_block_with_a_version(client):
+    quant = post(client).json()["quant"]
+    assert quant["schema_version"] == 1 and quant["track_record"]["scores"] and quant["price"]["past_months_up_pct"] is not None
 
 
 def test_the_api_key_is_used_but_never_returned(client, seen_keys):
@@ -68,7 +73,7 @@ def test_error_statuses_and_no_internal_details(client, monkeypatch, calls):
     for err, status in ((ConnectionError("refused 10.0.0.5"), 503), (Exception("429 quota"), 429),
                         (Exception("400 INVALID_ARGUMENT API key not valid"), 401),
                         (ValueError("secret internal detail"), 502)):
-        monkeypatch.setattr(nodes, "get_llm", lambda k, t, e=err: FakeLLM(error=e))
+        monkeypatch.setattr(nodes, "get_llm", lambda k, t, m=None, e=err: FakeLLM(error=e))
         monkeypatch.setattr("src.llm.time.sleep", lambda s: None)
         monkeypatch.setattr("src.config.LLM_MAX_RETRIES", 0)
         r = post(client)

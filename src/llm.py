@@ -24,10 +24,11 @@ _AUTH_HINTS = ("api key not valid", "api_key_invalid", "invalid api key", "api k
 _GOOGLE_KEY = re.compile(r"AIza[0-9A-Za-z_\-]{20,}")
 
 
-def get_llm(api_key: str | None, temperature: float):
+def get_llm(api_key: str | None, temperature: float, model: str | None = None):
     """Gemini when the user supplied a key, otherwise a local Ollama model."""
     if api_key:
-        return ChatGoogleGenerativeAI(model=config.GEMINI_MODEL, temperature=temperature, google_api_key=api_key)
+        return ChatGoogleGenerativeAI(model=model or config.GEMINI_MODEL, temperature=temperature,
+                                      google_api_key=api_key)
     kwargs: dict[str, Any] = {"model": config.OLLAMA_MODEL, "temperature": temperature}
     if config.OLLAMA_BASE_URL:
         kwargs["base_url"] = config.OLLAMA_BASE_URL
@@ -67,10 +68,16 @@ def message_text(response: Any) -> str:
     return str(content)
 
 
-def invoke_with_retry(llm, messages, *, api_key: str | None = None, max_retries: int | None = None,
-                      base_delay: float | None = None, sleep: Callable[[float], None] = time.sleep,
-                      rand: Callable[[], float] = random.random) -> str:
-    """Call the model; on a rate-limit error wait (1.5x longer each time, plus jitter) and try again.
+def usage_of(response: Any) -> dict:
+    """Token counts from a chat response, when the provider reports them (zeros otherwise)."""
+    meta = getattr(response, "usage_metadata", None) or {}
+    return {"input_tokens": int(meta.get("input_tokens") or 0), "output_tokens": int(meta.get("output_tokens") or 0)}
+
+
+def call_with_retry(call: Callable[[], Any], *, api_key: str | None = None, max_retries: int | None = None,
+                    base_delay: float | None = None, sleep: Callable[[float], None] = time.sleep,
+                    rand: Callable[[], float] = random.random) -> Any:
+    """Run `call`; on a rate-limit error wait (1.5x longer each time, plus jitter) and try again.
 
     Raises LLMRateLimitError after the retries run out, LLMAuthError if the key is rejected, LLMUnavailableError if the
     model cannot be reached, and LLMError for anything else. Other errors are not retried."""
@@ -79,7 +86,7 @@ def invoke_with_retry(llm, messages, *, api_key: str | None = None, max_retries:
     attempt = 0
     while True:
         try:
-            return message_text(llm.invoke(messages))
+            return call()
         except Exception as exc:
             safe = redact(str(exc), api_key)
             if is_rate_limit(exc):
@@ -101,3 +108,30 @@ def invoke_with_retry(llm, messages, *, api_key: str | None = None, max_retries:
                 raise LLMUnavailableError(f"Could not reach {where}.") from None
             log.warning("Model error: %s", safe[:300])
             raise LLMError() from None
+
+
+def invoke_with_retry(llm, messages, *, usage_sink: list | None = None, **retry) -> str:
+    """Call the model and return its text. Token counts, when reported, are appended to `usage_sink`."""
+    def call() -> str:
+        response = llm.invoke(messages)
+        if usage_sink is not None:
+            usage_sink.append(usage_of(response))
+        return message_text(response)
+
+    return call_with_retry(call, **retry)
+
+
+def invoke_structured(llm, messages, schema, *, usage_sink: list | None = None, **retry):
+    """Ask for output that fits a pydantic `schema`. Returns the parsed object, or None when the model's answer did not
+    fit the schema or the model cannot do structured output (the caller then falls back to plain text)."""
+    def call():
+        try:
+            runnable = llm.with_structured_output(schema, include_raw=True)
+        except (NotImplementedError, AttributeError):
+            return None
+        result = runnable.invoke(messages)
+        if usage_sink is not None:
+            usage_sink.append(usage_of(result.get("raw")))
+        return None if result.get("parsing_error") else result.get("parsed")
+
+    return call_with_retry(call, **retry)

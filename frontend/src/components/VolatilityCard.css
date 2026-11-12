@@ -1,0 +1,25 @@
+.volatility-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 4px solid #ab47bc;
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  color: #e0e0e0;
+}
+.vol-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.vol-header h3 { margin: 0; }
+.vol-regime { padding: 2px 12px; border-radius: 999px; font-size: 13px; border: 1px solid currentColor; }
+.vol-regime.low { color: #66bb6a; }
+.vol-regime.normal { color: #90caf9; }
+.vol-regime.high { color: #ef5350; }
+.vol-main { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.vol-label { font-size: 12px; color: rgba(255, 255, 255, 0.6); }
+.vol-value { font-size: 22px; font-weight: 600; }
+.vol-summary { margin: 14px 0 6px; line-height: 1.5; }
+.vol-note { font-size: 13px; color: rgba(255, 255, 255, 0.55); margin: 0 0 10px; }
+.vol-toggle { background: transparent; border: 1px solid rgba(255, 255, 255, 0.25); color: inherit; padding: 4px 12px; border-radius: 8px; cursor: pointer; }
+.vol-details { margin-top: 12px; font-size: 14px; }
+.vol-meta { margin: 8px 0; line-height: 1.5; }
+.vol-table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+.vol-table th, .vol-table td { text-align: left; padding: 4px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }

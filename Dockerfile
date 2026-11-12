@@ -12,6 +12,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY --chown=app:app src ./src
+COPY --chown=app:app demo ./demo
 
 USER app
 EXPOSE 8000

@@ -1,0 +1,684 @@
+{
+ "run_date": "2026-11-09",
+ "horizon_days": 21,
+ "tickers_scored": 24,
+ "tickers_failed": {},
+ "summary": {
+  "naive": {
+   "mean_qlike": 0.3998,
+   "mean_rmse_vol_pts": 13.29,
+   "qlike_improvement_vs_naive_pct": 0.0
+  },
+  "long_run": {
+   "mean_qlike": 0.2572,
+   "mean_rmse_vol_pts": 11.03,
+   "tickers_better_than_naive": "22 of 24",
+   "pooled_months_better_than_naive": "455 of 839",
+   "qlike_improvement_vs_naive_pct": 35.7
+  },
+  "ewma": {
+   "mean_qlike": 0.322,
+   "mean_rmse_vol_pts": 12.5,
+   "tickers_better_than_naive": "23 of 24",
+   "pooled_months_better_than_naive": "518 of 839",
+   "qlike_improvement_vs_naive_pct": 19.5
+  },
+  "garch": {
+   "mean_qlike": 0.2629,
+   "mean_rmse_vol_pts": 11.96,
+   "tickers_better_than_naive": "22 of 24",
+   "pooled_months_better_than_naive": "454 of 839",
+   "qlike_improvement_vs_naive_pct": 34.2
+  }
+ },
+ "per_ticker": {
+  "AAPL": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.4607,
+     "rmse_vol_pts": 12.56
+    },
+    "long_run": {
+     "qlike": 0.3888,
+     "rmse_vol_pts": 11.97
+    },
+    "ewma": {
+     "qlike": 0.3752,
+     "rmse_vol_pts": 12.74
+    },
+    "garch": {
+     "qlike": 0.2929,
+     "rmse_vol_pts": 11.97
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 15,
+    "ewma": 22,
+    "garch": 15
+   }
+  },
+  "MSFT": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.4444,
+     "rmse_vol_pts": 12.46
+    },
+    "long_run": {
+     "qlike": 0.3217,
+     "rmse_vol_pts": 10.3
+    },
+    "ewma": {
+     "qlike": 0.3418,
+     "rmse_vol_pts": 10.98
+    },
+    "garch": {
+     "qlike": 0.3199,
+     "rmse_vol_pts": 10.8
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 18,
+    "ewma": 22,
+    "garch": 22
+   }
+  },
+  "NVDA": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.2557,
+     "rmse_vol_pts": 17.11
+    },
+    "long_run": {
+     "qlike": 0.2684,
+     "rmse_vol_pts": 17.93
+    },
+    "ewma": {
+     "qlike": 0.2356,
+     "rmse_vol_pts": 16.78
+    },
+    "garch": {
+     "qlike": 0.271,
+     "rmse_vol_pts": 17.73
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 12,
+    "ewma": 18,
+    "garch": 13
+   }
+  },
+  "AMZN": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.3987,
+     "rmse_vol_pts": 14.27
+    },
+    "long_run": {
+     "qlike": 0.2548,
+     "rmse_vol_pts": 11.23
+    },
+    "ewma": {
+     "qlike": 0.3481,
+     "rmse_vol_pts": 13.54
+    },
+    "garch": {
+     "qlike": 0.3074,
+     "rmse_vol_pts": 14.41
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 24,
+    "ewma": 22,
+    "garch": 17
+   }
+  },
+  "GOOGL": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.3322,
+     "rmse_vol_pts": 11.84
+    },
+    "long_run": {
+     "qlike": 0.1872,
+     "rmse_vol_pts": 9.02
+    },
+    "ewma": {
+     "qlike": 0.2542,
+     "rmse_vol_pts": 10.61
+    },
+    "garch": {
+     "qlike": 0.1899,
+     "rmse_vol_pts": 9.48
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 23,
+    "ewma": 25,
+    "garch": 24
+   }
+  },
+  "META": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.6958,
+     "rmse_vol_pts": 19.37
+    },
+    "long_run": {
+     "qlike": 0.3205,
+     "rmse_vol_pts": 14.46
+    },
+    "ewma": {
+     "qlike": 0.5217,
+     "rmse_vol_pts": 17.87
+    },
+    "garch": {
+     "qlike": 0.467,
+     "rmse_vol_pts": 22.79
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 20,
+    "ewma": 26,
+    "garch": 17
+   }
+  },
+  "TSLA": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.2287,
+     "rmse_vol_pts": 19.49
+    },
+    "long_run": {
+     "qlike": 0.2199,
+     "rmse_vol_pts": 19.4
+    },
+    "ewma": {
+     "qlike": 0.1748,
+     "rmse_vol_pts": 17.51
+    },
+    "garch": {
+     "qlike": 0.1731,
+     "rmse_vol_pts": 16.9
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 18,
+    "ewma": 24,
+    "garch": 18
+   }
+  },
+  "JPM": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.321,
+     "rmse_vol_pts": 10.28
+    },
+    "long_run": {
+     "qlike": 0.2978,
+     "rmse_vol_pts": 8.99
+    },
+    "ewma": {
+     "qlike": 0.3026,
+     "rmse_vol_pts": 10.55
+    },
+    "garch": {
+     "qlike": 0.2591,
+     "rmse_vol_pts": 9.37
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 18,
+    "ewma": 19,
+    "garch": 20
+   }
+  },
+  "BAC": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.2752,
+     "rmse_vol_pts": 10.16
+    },
+    "long_run": {
+     "qlike": 0.228,
+     "rmse_vol_pts": 8.75
+    },
+    "ewma": {
+     "qlike": 0.2522,
+     "rmse_vol_pts": 10.22
+    },
+    "garch": {
+     "qlike": 0.2158,
+     "rmse_vol_pts": 9.04
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 18,
+    "ewma": 20,
+    "garch": 15
+   }
+  },
+  "XOM": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.1259,
+     "rmse_vol_pts": 6.46
+    },
+    "long_run": {
+     "qlike": 0.1583,
+     "rmse_vol_pts": 6.45
+    },
+    "ewma": {
+     "qlike": 0.1276,
+     "rmse_vol_pts": 6.6
+    },
+    "garch": {
+     "qlike": 0.1352,
+     "rmse_vol_pts": 6.61
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 11,
+    "ewma": 18,
+    "garch": 18
+   }
+  },
+  "CVX": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.2892,
+     "rmse_vol_pts": 9.77
+    },
+    "long_run": {
+     "qlike": 0.2325,
+     "rmse_vol_pts": 7.74
+    },
+    "ewma": {
+     "qlike": 0.2422,
+     "rmse_vol_pts": 9.3
+    },
+    "garch": {
+     "qlike": 0.2133,
+     "rmse_vol_pts": 8.53
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 15,
+    "ewma": 23,
+    "garch": 19
+   }
+  },
+  "JNJ": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.3945,
+     "rmse_vol_pts": 7.61
+    },
+    "long_run": {
+     "qlike": 0.2423,
+     "rmse_vol_pts": 6.17
+    },
+    "ewma": {
+     "qlike": 0.2946,
+     "rmse_vol_pts": 7.14
+    },
+    "garch": {
+     "qlike": 0.2375,
+     "rmse_vol_pts": 6.06
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 22,
+    "ewma": 21,
+    "garch": 19
+   }
+  },
+  "PFE": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.3147,
+     "rmse_vol_pts": 9.0
+    },
+    "long_run": {
+     "qlike": 0.1448,
+     "rmse_vol_pts": 6.43
+    },
+    "ewma": {
+     "qlike": 0.1906,
+     "rmse_vol_pts": 7.54
+    },
+    "garch": {
+     "qlike": 0.1438,
+     "rmse_vol_pts": 6.42
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 22,
+    "ewma": 28,
+    "garch": 23
+   }
+  },
+  "WMT": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.5656,
+     "rmse_vol_pts": 10.72
+    },
+    "long_run": {
+     "qlike": 0.3106,
+     "rmse_vol_pts": 8.25
+    },
+    "ewma": {
+     "qlike": 0.4712,
+     "rmse_vol_pts": 9.77
+    },
+    "garch": {
+     "qlike": 0.345,
+     "rmse_vol_pts": 8.8
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 23,
+    "ewma": 23,
+    "garch": 23
+   }
+  },
+  "KO": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.2112,
+     "rmse_vol_pts": 4.98
+    },
+    "long_run": {
+     "qlike": 0.18,
+     "rmse_vol_pts": 4.64
+    },
+    "ewma": {
+     "qlike": 0.1814,
+     "rmse_vol_pts": 4.96
+    },
+    "garch": {
+     "qlike": 0.159,
+     "rmse_vol_pts": 4.66
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 17,
+    "ewma": 19,
+    "garch": 18
+   }
+  },
+  "PG": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.2252,
+     "rmse_vol_pts": 5.64
+    },
+    "long_run": {
+     "qlike": 0.1705,
+     "rmse_vol_pts": 4.91
+    },
+    "ewma": {
+     "qlike": 0.1919,
+     "rmse_vol_pts": 5.33
+    },
+    "garch": {
+     "qlike": 0.1625,
+     "rmse_vol_pts": 4.9
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 17,
+    "ewma": 19,
+    "garch": 19
+   }
+  },
+  "DIS": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.7464,
+     "rmse_vol_pts": 15.09
+    },
+    "long_run": {
+     "qlike": 0.4082,
+     "rmse_vol_pts": 12.17
+    },
+    "ewma": {
+     "qlike": 0.6123,
+     "rmse_vol_pts": 15.1
+    },
+    "garch": {
+     "qlike": 0.3747,
+     "rmse_vol_pts": 12.74
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 21,
+    "ewma": 19,
+    "garch": 21
+   }
+  },
+  "NFLX": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.4246,
+     "rmse_vol_pts": 14.31
+    },
+    "long_run": {
+     "qlike": 0.2279,
+     "rmse_vol_pts": 11.09
+    },
+    "ewma": {
+     "qlike": 0.3183,
+     "rmse_vol_pts": 12.75
+    },
+    "garch": {
+     "qlike": 0.3561,
+     "rmse_vol_pts": 17.13
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 19,
+    "ewma": 23,
+    "garch": 15
+   }
+  },
+  "INTC": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.5335,
+     "rmse_vol_pts": 27.62
+    },
+    "long_run": {
+     "qlike": 0.3518,
+     "rmse_vol_pts": 22.52
+    },
+    "ewma": {
+     "qlike": 0.4637,
+     "rmse_vol_pts": 25.84
+    },
+    "garch": {
+     "qlike": 0.4098,
+     "rmse_vol_pts": 23.83
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 21,
+    "ewma": 20,
+    "garch": 20
+   }
+  },
+  "AMD": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.3766,
+     "rmse_vol_pts": 23.73
+    },
+    "long_run": {
+     "qlike": 0.2083,
+     "rmse_vol_pts": 17.77
+    },
+    "ewma": {
+     "qlike": 0.333,
+     "rmse_vol_pts": 22.85
+    },
+    "garch": {
+     "qlike": 0.2482,
+     "rmse_vol_pts": 18.96
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 21,
+    "ewma": 23,
+    "garch": 21
+   }
+  },
+  "BA": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.2653,
+     "rmse_vol_pts": 13.98
+    },
+    "long_run": {
+     "qlike": 0.2294,
+     "rmse_vol_pts": 11.81
+    },
+    "ewma": {
+     "qlike": 0.2354,
+     "rmse_vol_pts": 13.44
+    },
+    "garch": {
+     "qlike": 0.1903,
+     "rmse_vol_pts": 12.01
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 21,
+    "ewma": 18,
+    "garch": 21
+   }
+  },
+  "CAT": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.2998,
+     "rmse_vol_pts": 12.05
+    },
+    "long_run": {
+     "qlike": 0.1946,
+     "rmse_vol_pts": 9.55
+    },
+    "ewma": {
+     "qlike": 0.2453,
+     "rmse_vol_pts": 11.28
+    },
+    "garch": {
+     "qlike": 0.2137,
+     "rmse_vol_pts": 10.1
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 23,
+    "ewma": 25,
+    "garch": 20
+   }
+  },
+  "T": {
+   "origins": 35,
+   "skipped": 0,
+   "scores": {
+    "naive": {
+     "qlike": 0.2288,
+     "rmse_vol_pts": 7.1
+    },
+    "long_run": {
+     "qlike": 0.1866,
+     "rmse_vol_pts": 7.15
+    },
+    "ewma": {
+     "qlike": 0.1818,
+     "rmse_vol_pts": 6.32
+    },
+    "garch": {
+     "qlike": 0.1809,
+     "rmse_vol_pts": 7.35
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 15,
+    "ewma": 19,
+    "garch": 16
+   }
+  },
+  "NKE": {
+   "origins": 34,
+   "skipped": 1,
+   "scores": {
+    "naive": {
+     "qlike": 1.1811,
+     "rmse_vol_pts": 23.32
+    },
+    "long_run": {
+     "qlike": 0.4393,
+     "rmse_vol_pts": 16.13
+    },
+    "ewma": {
+     "qlike": 0.8313,
+     "rmse_vol_pts": 20.93
+    },
+    "garch": {
+     "qlike": 0.4442,
+     "rmse_vol_pts": 16.38
+    }
+   },
+   "wins_vs_naive": {
+    "long_run": 21,
+    "ewma": 22,
+    "garch": 20
+   }
+  }
+ }
+}

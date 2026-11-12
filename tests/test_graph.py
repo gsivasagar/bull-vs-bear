@@ -22,7 +22,7 @@ def test_full_run_produces_all_parts():
 
 
 def test_bull_and_bear_run_at_the_same_time_and_the_judge_waits_for_both(monkeypatch, calls):
-    monkeypatch.setattr(nodes, "get_llm", lambda key, temp: FakeLLM(delay=0.3, log=calls))
+    monkeypatch.setattr(nodes, "get_llm", lambda key, temp, model=None: FakeLLM(delay=0.3, log=calls))
     start = time.monotonic()
     create_graph().invoke(state())
     elapsed = time.monotonic() - start
@@ -69,8 +69,33 @@ def test_one_failing_agent_raises_instead_of_feeding_error_text_to_the_judge(mon
     """Previously a failed Bull/Bear call became an "argument" that the Judge then weighed as if it were real."""
     from src.errors import LLMError
 
-    monkeypatch.setattr(nodes, "get_llm", lambda key, temp: FakeLLM(error=ValueError("boom"), log=calls, fail_roles=failing))
+    monkeypatch.setattr(nodes, "get_llm", lambda key, temp, model=None: FakeLLM(error=ValueError("boom"), log=calls, fail_roles=failing))
     with pytest.raises(LLMError):
         create_graph().invoke(state())
     if failing != {"judge"}:
         assert not [c for c in calls if c["role"] == "judge"]          # the judge never saw a half-baked debate
+
+
+def test_quant_block_reaches_the_agents(calls):
+    create_graph().invoke(state())
+    judge = next(c for c in calls if c["role"] == "judge")
+    assert '"quant"' in judge["human"] and "forecast_annualized_pct" in judge["human"]
+    for hidden in ("qlike", "past_months_up", "inside_1sigma", "scores"):          # the agents get the short view only
+        assert hidden not in judge["human"]
+
+
+def test_quant_failure_does_not_stop_the_debate(monkeypatch, calls):
+    monkeypatch.setattr(nodes, "get_quant_signals", lambda t: (_ for _ in ()).throw(RuntimeError("boom")))
+    out = create_graph().invoke(state())
+    assert out["recommendation"] == "BUY" and out["quant"] == {}
+
+
+def test_quant_error_result_is_dropped(monkeypatch):
+    monkeypatch.setattr(nodes, "get_quant_signals", lambda t: {"error": "short history", "kind": "insufficient_data"})
+    assert create_graph().invoke(state())["quant"] == {}
+
+
+def test_prompts_say_the_quant_block_is_not_a_direction_forecast():
+    from src.agents.prompts import BEAR_AGENT_PROMPT, BULL_AGENT_PROMPT, JUDGE_AGENT_PROMPT
+    for prompt in (BULL_AGENT_PROMPT, BEAR_AGENT_PROMPT, JUDGE_AGENT_PROMPT):
+        assert "never present it as one" in prompt

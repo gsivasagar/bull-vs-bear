@@ -253,3 +253,9 @@ button:disabled {
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.45);
 }
+
+.usage-line { grid-column: 1 / -1; text-align: center; font-size: 12px; color: rgba(255, 255, 255, 0.5); margin: 4px 0 0; }
+
+.examples { text-align: center; font-size: 14px; color: rgba(255, 255, 255, 0.7); }
+.example-btn { background: transparent; border: 1px solid rgba(255, 255, 255, 0.3); color: inherit; padding: 2px 10px; margin: 0 4px; border-radius: 8px; cursor: pointer; }
+.saved-note { text-align: center; font-size: 13px; color: #ffb74d; }

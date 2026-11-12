@@ -57,3 +57,62 @@ def test_ttl_can_be_a_callable_and_zero_disables_caching():
 
     fn("a"), fn("a")
     assert calls == ["a", "a"]
+
+
+def test_single_flight_computes_once_for_concurrent_callers():
+    import threading
+    import time as _time
+
+    from src.cache import ttl_cache
+
+    calls = {"n": 0}
+
+    @ttl_cache(60, single_flight=True)
+    def slow(key):
+        calls["n"] += 1
+        _time.sleep(0.2)
+        return {"value": key}
+
+    results = []
+    threads = [threading.Thread(target=lambda: results.append(slow("A"))) for _ in range(5)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert calls["n"] == 1 and all(r == {"value": "A"} for r in results) and len(results) == 5
+
+
+def test_single_flight_does_not_share_a_failure():
+    from src.cache import ttl_cache
+
+    calls = {"n": 0}
+
+    @ttl_cache(60, single_flight=True)
+    def flaky(key):
+        calls["n"] += 1
+        return {"error": "down"} if calls["n"] == 1 else {"value": key}
+
+    assert flaky("A") == {"error": "down"}
+    assert flaky("A") == {"value": "A"} and calls["n"] == 2
+
+
+def test_without_single_flight_concurrent_callers_each_compute():
+    import threading
+    import time as _time
+
+    from src.cache import ttl_cache
+
+    calls = {"n": 0}
+
+    @ttl_cache(60)
+    def slow(key):
+        calls["n"] += 1
+        _time.sleep(0.1)
+        return {"value": key}
+
+    threads = [threading.Thread(target=lambda: slow("A")) for _ in range(3)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert calls["n"] >= 2                                       # shows why the option exists

@@ -1,0 +1,103 @@
+{
+ "date": "2026-11-09",
+ "plan": "medium",
+ "model": "gemini-2.5-flash",
+ "summary": {
+  "runs": 8,
+  "failed": 8,
+  "unclear_verdicts": 0,
+  "verdict_counts": {},
+  "consistency": {
+   "per_ticker": {},
+   "mean": null,
+   "tickers": 0
+  },
+  "position_bias": {
+   "pairs": 0,
+   "changed_share": null
+  },
+  "faithfulness": {
+   "bull": {
+    "checked": 0,
+    "supported": 0,
+    "share": null
+   },
+   "bear": {
+    "checked": 0,
+    "supported": 0,
+    "share": null
+   },
+   "judge": {
+    "checked": 0,
+    "supported": 0,
+    "share": null
+   },
+   "all": {
+    "checked": 0,
+    "supported": 0,
+    "share": null
+   }
+  },
+  "cost": {
+   "runs": 0
+  }
+ },
+ "runs": [
+  {
+   "ticker": "NVDA",
+   "order": "bull_first",
+   "rep": 0,
+   "error": "429 The AI provider is rate limiting requests. Wait a minute and try again.",
+   "seconds": 230.0
+  },
+  {
+   "ticker": "KO",
+   "order": "bull_first",
+   "rep": 0,
+   "error": "429 The AI provider is rate limiting requests. Wait a minute and try again.",
+   "seconds": 232.7
+  },
+  {
+   "ticker": "INTC",
+   "order": "bull_first",
+   "rep": 0,
+   "error": "429 The AI provider is rate limiting requests. Wait a minute and try again.",
+   "seconds": 232.4
+  },
+  {
+   "ticker": "NVDA",
+   "order": "bear_first",
+   "rep": 0,
+   "error": "429 The AI provider is rate limiting requests. Wait a minute and try again.",
+   "seconds": 231.3
+  },
+  {
+   "ticker": "KO",
+   "order": "bear_first",
+   "rep": 0,
+   "error": "429 The AI provider is rate limiting requests. Wait a minute and try again.",
+   "seconds": 228.7
+  },
+  {
+   "ticker": "INTC",
+   "order": "bear_first",
+   "rep": 0,
+   "error": "429 The AI provider is rate limiting requests. Wait a minute and try again.",
+   "seconds": 228.6
+  },
+  {
+   "ticker": "NVDA",
+   "order": "bull_first",
+   "rep": 1,
+   "error": "429 The AI provider is rate limiting requests. Wait a minute and try again.",
+   "seconds": 247.2
+  },
+  {
+   "ticker": "KO",
+   "order": "bull_first",
+   "rep": 1,
+   "error": "429 The AI provider is rate limiting requests. Wait a minute and try again.",
+   "seconds": 231.0
+  }
+ ]
+}

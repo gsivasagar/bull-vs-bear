@@ -2,3 +2,6 @@
 pytest>=8
 httpx>=0.27
 ruff>=0.6
+# Volatility evaluation (scripts/eval_quant.py), the GARCH models and their tests. Not needed to run the app.
+arch==8.0.0
+scipy==1.18.1
