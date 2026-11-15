@@ -1,5 +1,7 @@
 # Bull vs Bear: AI Investment Debate
 
+**Live demo:** https://bull-vs-bear.vercel.app/ (front end on Vercel, API on Render). You type your own Gemini API key into the page; it is sent in an `X-Api-Key` header (see below). The first request after a quiet spell may be slow.
+
 An AI tool that stages a debate about a stock. A **Bull** agent argues for buying, a **Bear** agent argues against, and
 a **Judge** weighs both against the underlying data and issues a BUY / SELL / HOLD memo.
 
